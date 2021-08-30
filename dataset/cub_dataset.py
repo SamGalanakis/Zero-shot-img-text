@@ -26,7 +26,7 @@ class Cub2011(Dataset):
         if self.train:
             self.transform = transforms.Compose([
                 transforms.ToTensor(),
-                transforms.RandomSizedCrop(224),
+                transforms.RandomResizedCrop(224),
                 transforms.RandomHorizontalFlip(),
                 normalize
             ])
