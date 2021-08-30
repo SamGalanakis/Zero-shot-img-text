@@ -1,0 +1,18 @@
+
+batch_size:
+  desc: Batch size
+  value: 16
+epochs:
+  desc: Max epochs to train for
+  value: 1000
+lr:
+  desc: Learning rate
+  value: 0.00005
+patience_scheduler:
+  value: 1000
+emb_dim:
+  desc: Projection dimension
+  value: 512
+
+  
+

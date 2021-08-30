@@ -1,0 +1,1 @@
+from .cub_dataset import Cub2011
