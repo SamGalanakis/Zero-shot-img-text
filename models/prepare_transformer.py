@@ -1,12 +1,14 @@
-from transformers import DistilBertTokenizer, DistilBertModel, DistilBertForSequenceClassification,DistilBertConfig
+from transformers import LongformerModel,DistilBertTokenizer, DistilBertModel, DistilBertForSequenceClassification,DistilBertConfig
 import torch
+import transformers
 from transformers import logging
+from transformers.utils.dummy_tokenizers_objects import LongformerTokenizerFast
 logging.set_verbosity_error()
 
 def prep_transformer():
     #configuration = DistilBertConfig(max_position_embeddings=2048)
-    tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
-    model = DistilBertModel.from_pretrained('distilbert-base-uncased')
+    tokenizer = transformers.LongformerTokenizer.from_pretrained('allenai/longformer-base-4096')
+    model = transformers.LongformerModel.from_pretrained('allenai/longformer-base-4096')
     
     return model,tokenizer
 
