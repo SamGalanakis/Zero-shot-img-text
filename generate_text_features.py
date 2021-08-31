@@ -7,13 +7,11 @@ from tqdm import tqdm
 import os
 import glob
 
-os.environ["CUDA_LAUNCH_BLOCKING"] = '1'
+
 name = 'longformer'
 text_features_dir = "data/generated_features/text_features/"
 
 
-if not os.path.isdir(out_dir):
-    os.mkdir(out_dir)
 
 text_dict = {}
 text_dir_path = "data/CUBird_WikiArticles"

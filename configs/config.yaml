@@ -13,6 +13,12 @@ patience_scheduler:
 emb_dim:
   desc: Projection dimension
   value: 512
+hidden_dims_text_embedder: 
+  desc: Hidden dims
+  value: [128,128,128]
+text_features_path:
+  desc: Path to precomputed text features pt file
+  value: data/generated_features/text_features/longformer.pt
 
   
 
