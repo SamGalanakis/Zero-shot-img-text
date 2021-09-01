@@ -27,7 +27,6 @@ transformer = transformer.to(device)
 with torch.no_grad():
     for key,val in tqdm(text_dict.items()):
         tokens = torch.tensor(tokenizer.encode(val,max_length=4096)).unsqueeze(0).to(device)
-        out = transformer(tokens).last_hidden_state.squeeze().cpu()
+        out = transformer(tokens).pooler_output.squeeze().cpu()
         text_feature_dict[key] = out
 torch.save(text_feature_dict,os.path.join(text_features_dir,f"{name}.pt"))
-pass

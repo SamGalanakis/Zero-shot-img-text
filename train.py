@@ -1,38 +1,52 @@
 from dataset import Cub2011
-from models import TextEmbdedder,prep_visual_encoder
+from models import MatchPredictor,prep_visual_encoder
 import wandb
 import torch
 from torch.utils.data import DataLoader
 from utils import IncrementalAverage
 from tqdm import tqdm
 from torch import nn 
+from models import MLP
+from torch.nn.utils.rnn import pad_sequence
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-wandb.init(project='ZeroShotImgText', entity='samme013',config='configs/config.yaml')
-config = wandb.config
-dataset = Cub2011('data/',train=True,text_features_path=config['text_features_path'])
-dataloader = DataLoader(dataset,batch_size=config['batch_size'],shuffle=True)
-visual_encoder = prep_visual_encoder()
-visual_encoder = visual_encoder.to(device)
-text_embedder = TextEmbdedder(dataset.text_features_emb_dim,
-config['hidden_dims_text_embedder'],
-config['emb_dim']).to(device)
-param_list = []
-param_list += text_embedder.parameters()
-param_list += visual_encoder.parameters()
-optimizer = torch.optim.Adam(parameters = param_list,lr = config['lr'])
 
-for epoch in tqdm(range(config['epochs'])):
-    accuracy_tracker = IncrementalAverage()
-    loss_tracker = IncrementalAverage()
-    for batch_index, batch in dataloader:
+def train():
+    
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-        img,text_features,target = [x.to(device) for x in batch]
-        img_features = visual_encoder(img)
-        text_embeddings = text_embedder(text_features)
+    wandb.init(project='ZeroShotImgText', entity='samme013',config='configs/config.yaml')
+    config = wandb.config
 
-        loss.backward()
-        optimizer.step()
-        accuracy_tracker.update(batch_accuracy)
-        loss_tracker.update(loss.item())
-        wandb.log({'accuracy':accuracy_tracker.value,'loss':loss_tracker.value})
+    text_features_items  = sorted(torch.load(config['text_features_path']).items())
+    text_classes = [x[0] for x in text_features_items]
+    text_features = torch.stack([x[1] for x in text_features_items]).to(device)
+    text_features_emb_dim = text_features.shape[-1]
+    dataset = Cub2011('data/',train=True)
+    dataloader = DataLoader(dataset,batch_size=config['batch_size'],shuffle=True,num_workers=1,
+    pin_memory=True)
+    visual_encoder = prep_visual_encoder()
+    visual_encoder = visual_encoder.to(device)
+    match_predictor = MatchPredictor(config['visual_features_emb_dim'],text_features_emb_dim,
+    config['hidden_dims']).to(device)
+    param_list = []
+    param_list += match_predictor.parameters()
+    param_list += visual_encoder.parameters()
+    optimizer = torch.optim.Adam(params = param_list,lr = config['lr'])
+
+    for epoch in tqdm(range(config['epochs'])):
+        accuracy_tracker = IncrementalAverage()
+        loss_tracker = IncrementalAverage()
+        for batch_index, batch in enumerate(dataloader):
+
+            img,target = [x.to(device) for x in batch]
+            img_features = visual_encoder(img)
+            scores = match_predictor(img_features,text_features)
+            
+         
+            loss.backward()
+            optimizer.step()
+            accuracy_tracker.update(batch_accuracy)
+            loss_tracker.update(loss.item())
+            wandb.log({'accuracy':accuracy_tracker.value,'loss':loss_tracker.value})
+if __name__ == '__main__':
+    train()

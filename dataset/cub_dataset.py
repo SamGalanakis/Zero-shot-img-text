@@ -13,9 +13,9 @@ class Cub2011(Dataset):
     filename = 'CUB_200_2011.tgz'
     tgz_md5 = '97eceeb196236b17998738112f37df78'
     text_folder =  'Raw_Wiki_Articles'
-    def __init__(self, root,text_features_path, train=True, transform=None, loader=default_loader):
+    def __init__(self, root, train=True, transform=None, loader=default_loader):
         self.root = os.path.expanduser(root)
-        self.text_features_path = text_features_path
+     
         self.transform = transform
         self.loader = default_loader
         self.train = train
@@ -50,8 +50,7 @@ class Cub2011(Dataset):
         data = images.merge(image_class_labels, on='img_id')
         self.data = data.merge(train_test_split, on='img_id')
 
-        self.text_features_dict  = torch.load(self.text_features_path)
-        self.text_features_emb_dim = list(self.text_features_dict.values())[0].shape[-1]
+
         if self.train:
             self.data = self.data[self.data.is_training_img == 1]
         else:
@@ -67,10 +66,10 @@ class Cub2011(Dataset):
         path = os.path.join(self.root, self.base_folder, sample.filepath)
         target = sample.target - 1  # Targets start at 1 by default, so shift to 0
         img = self.loader(path)
-        class_name = os.path.basename(os.path.dirname(path)).split('.')[-1]
-        associated_text_features = self.text_features_dict[class_name]
+        
+      
 
   
         img = self.transform(img)
 
-        return img,associated_text_features,target
+        return img,torch.LongTensor([target])

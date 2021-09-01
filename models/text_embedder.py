@@ -3,14 +3,15 @@ import einops
 from torch import nn
 from.nets import MLP
 
-class TextEmbdedder(nn.Module):
-    def __init__(self,input_dim,hidden_dims,emb_dim):
+class MatchPredictor(nn.Module):
+    def __init__(self,emb_dim_visual,emb_dim_text,hidden_dims):
         super().__init__()
-        self.emb_dim = emb_dim
-        self.linear = MLP(input_dim,hidden_dims,emb_dim)
 
-    def forward(self,x):
-        # Could try adding the vis features to this linear layer
-        x = self.linear(x)
-        x = einops.reduce(x,'n b e -> b e','max')
-        return x
+        self.mlp = MLP(emb_dim_visual+emb_dim_text, hidden_dims,1,nonlin= torch.nn.GELU())
+
+    def forward(self,visual,text):
+        visual = einops.repeat(visual,'b e -> b t e',t = text.shape[0])
+        text = einops.repeat(text,'t e -> b t e',b = visual.shape[0])
+        x = torch.cat((visual,text),dim=-1)
+        match_val = self.mlp(x)
+        return match_val

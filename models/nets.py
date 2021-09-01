@@ -5,7 +5,7 @@ from torch import nn
 
 class MLP(nn.Module):
     """MLP class with option for residual connections"""
-    def __init__(self,in_dim,sizes,out_dim,nonlin,residual=True):
+    def __init__(self,in_dim,sizes,out_dim,nonlin,residual=False):
         super().__init__()
         self.in_dim = in_dim
         self.sizes = sizes
@@ -21,7 +21,7 @@ class MLP(nn.Module):
 
         for index, layer in enumerate(self.layers):
             if ((index % 2) == 0):
-                residual = x
+                residual = x if self.residual else 0
                 x = self.nonlin(layer(x))
             else:
                 x = self.nonlin(residual+layer(x))
