@@ -2,7 +2,7 @@
 wandb/
 data/*
 .vscode/
-
+save/*
 
 
 # Byte-compiled / optimized / DLL files

@@ -14,7 +14,7 @@ emb_dim:
   desc: Projection dimension
   value: 1000
 hidden_dims:
-  value: [1024,512,64]
+  value: [1024,1024,1024,512,64]
 visual_features_emb_dim:
   value: 1000
 split_path:
@@ -22,6 +22,8 @@ split_path:
 text_features_path:
   desc: Path to precomputed text features pt file
   value: data/generated_features/text_features/longformer.pt
+preload_path:
+  value: False
 
   
 
