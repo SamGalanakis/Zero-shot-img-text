@@ -13,5 +13,5 @@ class MatchPredictor(nn.Module):
         visual = einops.repeat(visual,'b e -> b t e',t = text.shape[0])
         text = einops.repeat(text,'t e -> b t e',b = visual.shape[0])
         x = torch.cat((visual,text),dim=-1)
-        match_val = self.mlp(x).squeeze().softmax(dim=-1)
+        match_val = self.mlp(x).squeeze()
         return match_val

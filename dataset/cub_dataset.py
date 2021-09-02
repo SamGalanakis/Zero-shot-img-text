@@ -28,14 +28,15 @@ class Cub2011(Dataset):
       
         if self.mode == 'train':
             self.transform = transforms.Compose([
-                transforms.ToTensor(),
-                transforms.RandomResizedCrop(224),
-                transforms.RandomHorizontalFlip(),
-                normalize
+            transforms.Resize(256),
+    transforms.CenterCrop(224),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             ])
         else:
             self.transform = transforms.Compose([
                 transforms.ToTensor(),
+                transforms.Resize(224),
                 normalize
             ])
 
@@ -51,7 +52,7 @@ class Cub2011(Dataset):
         image_class_labels = pd.read_csv(os.path.join(self.root, 'CUB_200_2011', 'image_class_labels.txt'),
                                          sep=' ', names=['img_id', 'target'])
         self.data = images.merge(image_class_labels, on='img_id')
-        self.data['is_training_img'] = self.split_lines
+        self.data['split_type'] = self.split_lines
 
         
       
@@ -61,14 +62,15 @@ class Cub2011(Dataset):
         self.classes_target_dict = {class_name:i for i,class_name in enumerate(classes)}
         self.target_classes_dict = {val:key for key,val in self.classes_target_dict.items()}
         if self.mode == 'train':
-            self.data = self.data[self.data.is_training_img == 1]
+            self.data = self.data[self.data.split_type == 1]
         elif self.mode == 'test':
-            self.data = self.data[self.data.is_training_img == 2]
+            self.data = self.data[self.data.split_type == 2]
         elif self.mode == 'val':
-            self.data = self.data[self.data.is_training_img == 0]
+            self.data = self.data[self.data.split_type == 0]
         else:
             raise Exception('Invalid mode')
         self.targets_in_split = [x-1 for x in self.data['target'].unique().tolist()]
+        self.target_reindex_map = {original_target:i for i,original_target in enumerate(self.targets_in_split)}
         print(f'Loaded data!')
 
 
@@ -83,5 +85,5 @@ class Cub2011(Dataset):
         img = self.loader(path)
         class_name = os.path.basename(os.path.dirname(path)).split('.')[-1]
         img = self.transform(img)
-        target = self.classes_target_dict[class_name]
+        target = self.target_reindex_map[self.classes_target_dict[class_name]]
         return img,torch.LongTensor([target])

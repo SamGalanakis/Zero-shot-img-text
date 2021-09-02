@@ -1,24 +1,24 @@
 
 batch_size:
   desc: Batch size
-  value: 16
+  value: 256
 epochs:
   desc: Max epochs to train for
   value: 1000
 lr:
   desc: Learning rate
-  value: 0.00005
+  value: 1.E-4
 patience_scheduler:
   value: 1000
 emb_dim:
   desc: Projection dimension
-  value: 256
+  value: 1000
 hidden_dims:
-  value: [512,256,256,64]
+  value: [1024,512,64]
 visual_features_emb_dim:
   value: 1000
 split_path:
-  value: 'data/cub_splits/proposed_split1.txt'
+  value: 'data/cub_splits/proposed_split2.txt'
 text_features_path:
   desc: Path to precomputed text features pt file
   value: data/generated_features/text_features/longformer.pt
