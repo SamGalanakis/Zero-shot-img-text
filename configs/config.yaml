@@ -17,7 +17,8 @@ hidden_dims:
   value: [512,256,256,64]
 visual_features_emb_dim:
   value: 1000
-
+split_path:
+  value: 'data/cub_splits/proposed_split1.txt'
 text_features_path:
   desc: Path to precomputed text features pt file
   value: data/generated_features/text_features/longformer.pt

@@ -13,15 +13,16 @@ from torch.nn.utils.rnn import pad_sequence
 def train():
     
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
+    
     wandb.init(project='ZeroShotImgText', entity='samme013',config='configs/config.yaml')
     config = wandb.config
-
+    dataset = Cub2011('data/',split_path=config['split_path'],mode='train')
     text_features_items  = sorted(torch.load(config['text_features_path']).items())
     text_classes = [x[0] for x in text_features_items]
+    targets = [dataset.classes_target_dict[x] for x in text_classes]
     text_features = torch.stack([x[1] for x in text_features_items]).to(device)
     text_features_emb_dim = text_features.shape[-1]
-    dataset = Cub2011('data/',train=True)
+ 
     dataloader = DataLoader(dataset,batch_size=config['batch_size'],shuffle=True,num_workers=1,
     pin_memory=True)
     visual_encoder = prep_visual_encoder()

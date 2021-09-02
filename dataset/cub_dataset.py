@@ -6,26 +6,27 @@ from torch.utils.data import Dataset
 import glob
 import torch
 from torchvision import transforms
-#Code adapted from  https://github.com/TDeVries/cub2011_dataset
+
+
 class Cub2011(Dataset):
     base_folder = 'CUB_200_2011/images'
     url = 'http://www.vision.caltech.edu/visipedia-data/CUB-200-2011/CUB_200_2011.tgz'
     filename = 'CUB_200_2011.tgz'
     tgz_md5 = '97eceeb196236b17998738112f37df78'
     text_folder =  'Raw_Wiki_Articles'
-    def __init__(self, root, train=True, transform=None, loader=default_loader):
+    def __init__(self, root,split_path, mode='train', transform=None, loader=default_loader):
         self.root = os.path.expanduser(root)
-     
+        self.split_path = split_path
         self.transform = transform
         self.loader = default_loader
-        self.train = train
+        self.mode = mode
         self._load_metadata()
 
         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
       
       
-        if self.train:
+        if self.mode == 'train':
             self.transform = transforms.Compose([
                 transforms.ToTensor(),
                 transforms.RandomResizedCrop(224),
@@ -40,21 +41,36 @@ class Cub2011(Dataset):
 
 
     def _load_metadata(self):
+        with open(self.split_path,encoding='utf-8') as f:
+            split_lines = f.readlines()
+        
+        self.split_lines = [int(x.rstrip().split(' ')[-1]) for x in split_lines]
+
         images = pd.read_csv(os.path.join(self.root, 'CUB_200_2011', 'images.txt'), sep=' ',
                              names=['img_id', 'filepath'])
         image_class_labels = pd.read_csv(os.path.join(self.root, 'CUB_200_2011', 'image_class_labels.txt'),
                                          sep=' ', names=['img_id', 'target'])
-        train_test_split = pd.read_csv(os.path.join(self.root, 'CUB_200_2011', 'train_test_split.txt'),
-                                       sep=' ', names=['img_id', 'is_training_img'])
+        self.data = images.merge(image_class_labels, on='img_id')
+        self.data['is_training_img'] = self.split_lines
 
-        data = images.merge(image_class_labels, on='img_id')
-        self.data = data.merge(train_test_split, on='img_id')
-
-
-        if self.train:
+        
+      
+        with open("data\CUB_200_2011\classes.txt",encoding = 'utf-8') as f:
+            classes = f.readlines()
+        classes = [x.rstrip().split('.')[-1] for x in classes]
+        self.classes_target_dict = {class_name:i for i,class_name in enumerate(classes)}
+        self.target_classes_dict = {val:key for key,val in self.classes_target_dict.items()}
+        if self.mode == 'train':
             self.data = self.data[self.data.is_training_img == 1]
-        else:
+        elif self.mode == 'test':
+            self.data = self.data[self.data.is_training_img == 2]
+        elif self.mode == 'val':
             self.data = self.data[self.data.is_training_img == 0]
+        else:
+            raise Exception('Invalid mode')
+        self.targets_in_split = [x-1 for x in self.data['target'].unique().tolist()]
+        print(f'Loaded data!')
+
 
 
 
@@ -64,12 +80,8 @@ class Cub2011(Dataset):
     def __getitem__(self, idx):
         sample = self.data.iloc[idx]
         path = os.path.join(self.root, self.base_folder, sample.filepath)
-        target = sample.target - 1  # Targets start at 1 by default, so shift to 0
         img = self.loader(path)
-        
-      
-
-  
+        class_name = os.path.basename(os.path.dirname(path)).split('.')[-1]
         img = self.transform(img)
-
+        target = self.classes_target_dict[class_name]
         return img,torch.LongTensor([target])
