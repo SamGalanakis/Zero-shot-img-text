@@ -25,7 +25,8 @@ def get_text_feats(dataset,device,config):
         
         sorted_text_feats = torch.stack(text_features).to(device)
         targets = torch.LongTensor(targets).to(device)
-        return sorted_text_feats,targets
+        return sorted_text_feats
+
 def train():
     best_test_loss = -1000
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -40,10 +41,10 @@ def train():
 
     # Test dataset
     dataset_test = Cub2011('data/',split_path=config['split_path'],mode='test')
-    text_features_test,targets_test = get_text_feats(dataset_test,device,config)
+    text_features_test = get_text_feats(dataset_test,device,config)
     dataloader_test = DataLoader(dataset_test,batch_size=config['batch_size'],shuffle=True,num_workers=4,
     pin_memory=True)
-    text_features,targets = get_text_feats(dataset,device,config)
+    text_features = get_text_feats(dataset,device,config)
     text_features_emb_dim = text_features.shape[-1]
 
     
@@ -51,7 +52,7 @@ def train():
     visual_encoder = visual_encoder.to(device)
     
     match_predictor = MatchPredictor(config['visual_features_emb_dim'],text_features_emb_dim,
-    config['hidden_dims'])
+    config['hidden_dims'],dropout = config['dropout'])
     if config['preload_path']:
         print(f'Loading from save')
         loaded_save_dict = torch.load(config['preload_path'])
@@ -86,6 +87,7 @@ def train():
 
 
         with torch.no_grad():
+            match_predictor.eval()
             accuracy_tracker = IncrementalAverage()
             loss_tracker = IncrementalAverage()
             for batch in dataloader_test:
@@ -105,6 +107,6 @@ def train():
                 torch.save(save_dict,f'save/models/{wandb.run.name}_{epoch}.pt')
                 best_test_loss = loss_tracker.value
 
-
+        match_predictor.train()
 if __name__ == '__main__':
     train()

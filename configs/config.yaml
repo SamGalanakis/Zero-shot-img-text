@@ -18,12 +18,15 @@ hidden_dims:
 visual_features_emb_dim:
   value: 1000
 split_path:
-  value: 'data/cub_splits/proposed_split2.txt'
+  value: 'data/cub_splits/proposed_split3.txt'
 text_features_path:
   desc: Path to precomputed text features pt file
   value: data/generated_features/text_features/longformer.pt
 preload_path:
   value: False
+dropout:
+  desc: Dropout probability in match predictor
+  value: 0.1
 
   
 
