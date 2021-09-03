@@ -11,7 +11,7 @@ https://github.com/EthanZhu90/ZSL_PP_CVPR17
 ## Approach
 Img --> ResNet50 --> visual embedding 
 
-Text --> [LongFormer](https://arxiv.org/abs/2004.05150) --> text embedding
+Wikipedia Text --> Transformer --> text embedding
 
 visual embedding,text_embedding --> MLP --> match score for each text-img couple
 

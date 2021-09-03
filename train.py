@@ -11,21 +11,16 @@ from torch.nn.utils.rnn import pad_sequence
 
 def get_text_feats(dataset,device,config):
     with torch.no_grad():
-        text_feature_items  = sorted(torch.load(config['text_features_path']).items())
-        text_classes = [x[0] for x in text_feature_items]
-        text_features = [x[1] for x in text_feature_items]
-        targets = [dataset.classes_target_dict[x] for x in text_classes]
-        target_split_mask = [x in dataset.targets_in_split for x in targets]
-        text_features = [x for i,x in enumerate(text_features) if target_split_mask[i]]
+        text_feature_items  = torch.load(config['text_features_path']).items()
+        text_feature_items = [(dataset.classes_target_dict[x[0]],x[1]) for x in text_feature_items]
+        text_feature_items = [ (dataset.target_reindex_map[x[0]],x[1]) for x in text_feature_items if x[0] in dataset.targets_in_split]
+        text_feature_items = sorted(text_feature_items,key = lambda x: x[0])
+
+        text_feats = torch.stack([x[1] for x in text_feature_items]).to(device)
+
         
-        sorted_text_feats = []
-        targets = [dataset.target_reindex_map[x] for i,x in enumerate(targets) if target_split_mask[i]]
-        for i in range(0,len(text_features)):
-            sorted_text_feats.append(text_features[targets.index(i)])
-        
-        sorted_text_feats = torch.stack(text_features).to(device)
-        targets = torch.LongTensor(targets).to(device)
-        return sorted_text_feats
+
+        return text_feats
 
 def train():
     best_test_loss = -1000
@@ -36,6 +31,7 @@ def train():
     
     #Train dataset
     dataset = Cub2011('data/',split_path=config['split_path'],mode='train')
+    text_features = get_text_feats(dataset,device,config)
     dataloader = DataLoader(dataset,batch_size=config['batch_size'],shuffle=True,num_workers=4,
     pin_memory=True)
 
@@ -44,7 +40,7 @@ def train():
     text_features_test = get_text_feats(dataset_test,device,config)
     dataloader_test = DataLoader(dataset_test,batch_size=config['batch_size'],shuffle=True,num_workers=4,
     pin_memory=True)
-    text_features = get_text_feats(dataset,device,config)
+    
     text_features_emb_dim = text_features.shape[-1]
 
     
@@ -77,7 +73,7 @@ def train():
             loss = criterion(scores,target)
             with torch.no_grad():
                 predict = scores.softmax(dim=-1).argmax(dim=-1)
-                batch_accuracy = (predict == target).sum()/config['batch_size']
+                batch_accuracy = (predict == target).sum()/predict.numel()
             loss.backward()
             optimizer.step()
             accuracy_tracker.update(batch_accuracy.item())
@@ -97,7 +93,7 @@ def train():
                 scores = match_predictor(img_features,text_features_test)
                 loss = criterion(scores,target)
                 predict = scores.softmax(dim=-1).argmax(dim=-1)
-                batch_accuracy = (predict == target).sum()/config['batch_size']
+                batch_accuracy = (predict == target).sum()/predict.numel()
                 accuracy_tracker.update(batch_accuracy.item())
                 loss_tracker.update(loss.item())
             wandb.log({'test_accuracy':accuracy_tracker.value,'test_loss':loss_tracker.value})
