@@ -9,7 +9,7 @@ class MatchPredictor(nn.Module):
         self.dropout = nn.Dropout(dropout)
         self.mlp = MLP(emb_dim_visual+emb_dim_text, hidden_dims,1,nonlin= torch.nn.GELU())
         #self.mlp_vis = MLP(emb_dim_visual, hidden_dims,128,nonlin= torch.nn.GELU())
-        #self.mlp_text = MLP(emb_dim_text, hidden_dims,128,nonlin= torch.nn.GELU())
+    #self.mlp_text = MLP(emb_dim_text, hidden_dims,128,nonlin= torch.nn.GELU())
     def forward(self,visual,text):
         visual = einops.repeat(visual,'b e -> b t e',t = text.shape[0])
         text = einops.repeat(text,'t e -> b t e',b = visual.shape[0])

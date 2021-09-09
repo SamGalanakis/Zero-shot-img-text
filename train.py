@@ -8,7 +8,7 @@ from tqdm import tqdm
 from torch import nn 
 from models import MLP
 from torch.nn.utils.rnn import pad_sequence
-
+from sklearn.metrics import f1_score
 def get_text_feats(dataset,device,config):
     with torch.no_grad():
         text_feature_items  = torch.load(config['text_features_path']).items()

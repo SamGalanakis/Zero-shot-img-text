@@ -8,7 +8,7 @@ import os
 import glob
 
 
-name = 'multi-qa-mpnet-base-dot-v1'
+name = 'longformer_hidden_last_mean_4096'
 text_features_dir = "data/generated_features/text_features/"
 
 
@@ -22,12 +22,13 @@ for path in text_paths:
         text_dict[os.path.basename(path.split('.')[1])] = str
 text_feature_dict = {}
 device = 'cuda'
-transformer  = prep_transformer()
+transformer,tokenizer  = prep_transformer()
 transformer = transformer.to(device)
 with torch.no_grad():
     for key,val in tqdm(text_dict.items()):
-       # tokens = torch.tensor(tokenizer.encode(val,max_length=4096)).unsqueeze(0).to(device)
-        #out = transformer(tokens).pooler_output.squeeze().cpu()
-        out = torch.from_numpy(transformer.encode(val))
+        tokens = torch.tensor(tokenizer.encode(val,max_length=4096)).unsqueeze(0).to(device)
+        out = transformer(tokens,output_hidden_states=True )#.pooler_output.squeeze().cpu()
+        # out = torch.from_numpy(transformer.encode(val))
+        out = out.last_hidden_state.squeeze().mean(dim=0).cpu()
         text_feature_dict[key] = out
 torch.save(text_feature_dict,os.path.join(text_features_dir,f"{name}.pt"))
